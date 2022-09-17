@@ -5,7 +5,17 @@ public class UIPilot<T: Equatable>: ObservableObject {
 
     private let logger: Logger
     
-    @Published var paths: [UIPilotPath<T>] = []
+    @Published var pathsiOS16: [UIPilotPath<T>] = []
+    
+    @Published var paths: [UIPilotPath<T>] = [] {
+        didSet {
+            if paths.isEmpty {
+                pathsiOS16 = []
+            } else {
+                pathsiOS16 = Array(paths.dropFirst())
+            }
+        }
+    }
 
     public var stack: [T] {
         return paths.map { $0.route }
@@ -140,13 +150,31 @@ public struct UIPilotHost<T: Equatable, Screen: View>: View {
     }
 
     public var body: some View {
-        NavigationView {
-            viewGenerator.build(pilot.paths, routeMap)
+        if #available(iOS 16.0, *) {
+            NavigationStack(path: $pilot.pathsiOS16) {
+                getiOS16Root()
+                .navigationDestination(for: UIPilotPath<T>.self) { path in
+                    routeMap(path.route)
+                }
+            }
+            .environmentObject(pilot)
+        } else {
+            NavigationView {
+                viewGenerator.build(pilot.paths, routeMap)
+            }
+    #if !os(macOS)
+            .navigationViewStyle(.stack)
+    #endif
+            .environmentObject(pilot)
         }
-#if !os(macOS)
-        .navigationViewStyle(.stack)
-#endif
-        .environmentObject(pilot)
+    }
+    
+    @ViewBuilder func getiOS16Root() -> some View {
+        if pilot.paths.isEmpty {
+            EmptyView()
+        } else {
+            routeMap(pilot.paths.first!.route)
+        }
     }
 }
 
@@ -188,8 +216,4 @@ class ViewGenerator<T: Equatable, Screen: View>: ObservableObject {
         }
         self.pathViews = pathViews
     }
-}
-
-protocol Logger {
-    func log(_ value: String)
 }
