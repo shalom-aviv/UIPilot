@@ -152,10 +152,7 @@ public struct UIPilotHost<T: Equatable, Screen: View>: View {
     public var body: some View {
         if #available(iOS 16.0, *) {
             NavigationStack(path: $pilot.pathsiOS16) {
-                getiOS16Root()
-                .navigationDestination(for: UIPilotPath<T>.self) { path in
-                    routeMap(path.route)
-                }
+                viewGenerator.build(pilot.paths, routeMap)
             }
             .environmentObject(pilot)
         } else {
