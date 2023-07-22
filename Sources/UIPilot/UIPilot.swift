@@ -12,7 +12,7 @@ public class UIPilot<T: Equatable>: ObservableObject {
         return _routes
     }
     
-    var onPush: ((T) -> Void)?
+    var onPush: ((T, Bool) -> Void)?
     var onPopLast: ((Int, Bool) -> Void)?
 
     public init(initial: T? = nil, debug: Bool = false) {
@@ -25,10 +25,10 @@ public class UIPilot<T: Equatable>: ObservableObject {
         }
     }
 
-    public func push(_ route: T) {
-        logger.log("UIPilot - Pushing \(route) route.")
+    public func push(_ route: T, animated: Bool = true) {
+        logger.log("UIPilot - Pushing animated(\(animated)) \(route) route.")
         self._routes.append(route)
-        self.onPush?(route)
+        self.onPush?(route, animated)
     }
 
     public func pop(animated: Bool = true) {
@@ -119,13 +119,13 @@ struct NavigationControllerHost<T: Equatable, Screen: View>: UIViewControllerRep
         
         for path in uipilot.routes {
             navigation.pushViewController(
-                UIHostingController(rootView: routeMap(path)), animated: true
+                UIHostingController(rootView: routeMap(path)), animated: false
             )
         }
         
-        uipilot.onPush = { route in
+        uipilot.onPush = { route, animated in
             navigation.pushViewController(
-                UIHostingController(rootView: routeMap(route)), animated: true
+                UIHostingController(rootView: routeMap(route)), animated: animated
             )
         }
         
